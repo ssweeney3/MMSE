@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MMSE Scoring App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card-bg: #ffffff;
+      --border: #d4d4d8;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --ok: #16a34a;
+      --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      --radius-lg: 18px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #e5e7eb 0, #f9fafb 55%, #e5e7eb 100%);
+      color: var(--text-main);
+    }
+
+    .app-shell {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px 32px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 span.icon {
+      font-size: 1.4rem;
+    }
+
+    header p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .tag {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr);
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 880px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      padding: 18px 18px 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+    }
+
+    .section {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #f9fafb;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .section-max {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .subsection-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 4px 10px;
+      margin-bottom: 4px;
+    }
+
+    label.checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    label.checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .number-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 0.85rem;
+    }
+
+    .number-input-row input[type="number"] {
+      width: 70px;
+      padding: 4px 6px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .number-input-row small {
+      color: var(--text-muted);
+    }
+
+    .score-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+
+    .score-chip {
+      border-radius: 999px;
+      border: 1px dashed var(--border);
+      padding: 4px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f9fafb;
+    }
+
+    .score-chip span.label {
+      color: var(--text-muted);
+    }
+
+    .score-chip span.value {
+      font-weight: 600;
+    }
+
+    .total-card {
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: var(--radius-lg);
+      padding: 16px 16px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .total-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top left,
+      rgba(96, 165, 250, 0.4),
+      transparent 55%);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .total-inner {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    @media (max-width: 880px) {
+      .total-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .total-score-main {
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .total-score-sub {
+      font-size: 0.9rem;
+      color: #cbd5f5;
+    }
+
+    .total-score-sub span {
+      font-weight: 600;
+    }
+
+    .interpretation-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+    }
+
+    .interpretation-label span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .interpretation-text {
+      font-size: 0.8rem;
+      color: #e5e7eb;
+      margin-top: 6px;
+    }
+
+    .helper-text {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .legend {
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    .legend span {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .legend strong {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #111827;
+      color: #e5e7eb;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 5px 12px rgba(15, 23, 42, 0.5);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      box-shadow: none;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .note {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header>
+    <div>
+      <h1><span class="icon">🧠</span>MMSE Scoring</h1>
+      <p>Click items the patient answers correctly. Scores update automatically.</p>
+    </div>
+    <div class="tag">Max Score: 30</div>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT: Form -->
+    <div class="card">
+      <h2>MMSE Items</h2>
+
+      <!-- Orientation -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">1. Orientation</div>
+          <div class="section-max">Max 10 points</div>
+        </div>
+
+        <div class="subsection-label">Time (max 5)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-time" data-points="1">
+            Year correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-time" data-points="1">
+            Season correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-time" data-points="1">
+            Date correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-time" data-points="1">
+            Day of week correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-time" data-points="1">
+            Month correct
+          </label>
+        </div>
+
+        <div class="subsection-label">Place (max 5)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-place" data-points="1">
+            State correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-place" data-points="1">
+            County / Parish correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-place" data-points="1">
+            City / Town correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-place" data-points="1">
+            Building (clinic / hospital) correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox orient-place" data-points="1">
+            Floor / unit correct
+          </label>
+        </div>
+      </div>
+
+      <!-- Registration -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">2. Registration</div>
+          <div class="section-max">Max 3 points</div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 4px;">
+          Check each word the patient repeats correctly on first attempt.
+        </p>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox registration" data-points="1">
+            Word 1 correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox registration" data-points="1">
+            Word 2 correct
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox registration" data-points="1">
+            Word 3 correct
+          </label>
+        </div>
+      </div>
+
+      <!-- Attention & Calculation -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">3. Attention &amp; Calculation</div>
+          <div class="section-max">Max 5 points</div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 4px;">
+          Use either serial 7s or spelling “WORLD” backward; enter total correct.
+        </p>
+        <div class="number-input-row">
+          <label for="attentionScore">Score:</label>
+          <input type="number" id="attentionScore" class="score-input"
+                 min="0" max="5" step="1" value="0">
+          <small>(0–5)</small>
+        </div>
+      </div>
+
+      <!-- Recall -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">4. Recall</div>
+          <div class="section-max">Max 3 points</div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 4px;">
+          After a delay, check each of the original 3 words recalled.
+        </p>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox recall" data-points="1">
+            Word 1 recalled
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox recall" data-points="1">
+            Word 2 recalled
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox recall" data-points="1">
+            Word 3 recalled
+          </label>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">5. Language</div>
+          <div class="section-max">Max 9 points</div>
+        </div>
+
+        <div class="subsection-label">Naming (max 2)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Names pencil (or pen) correctly
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Names watch (or similar object) correctly
+          </label>
+        </div>
+
+        <div class="subsection-label">Repetition (max 1)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Repeats “No ifs, ands, or buts” correctly
+          </label>
+        </div>
+
+        <div class="subsection-label">Three-step command (max 3)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Takes paper in right hand
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Folds it in half
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Places it on the floor / table
+          </label>
+        </div>
+
+        <div class="subsection-label">Reading (max 1)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Performs written command “CLOSE YOUR EYES”
+          </label>
+        </div>
+
+        <div class="subsection-label">Writing (max 1)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Writes a complete sentence
+          </label>
+        </div>
+
+        <div class="subsection-label">Copying (max 1)</div>
+        <div class="item-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" class="score-checkbox language" data-points="1">
+            Copies intersecting pentagons correctly
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Score summary -->
+    <div class="card">
+      <h2>Scores &amp; Interpretation</h2>
+
+      <div class="score-summary">
+        <div class="score-chip">
+          <span class="label">Orientation</span>
+          <span class="value" id="orientationTotal">0 / 10</span>
+        </div>
+        <div class="score-chip">
+          <span class="label">Registration</span>
+          <span class="value" id="registrationTotal">0 / 3</span>
+        </div>
+        <div class="score-chip">
+          <span class="label">Attention</span>
+          <span class="value" id="attentionTotal">0 / 5</span>
+        </div>
+        <div class="score-chip">
+          <span class="label">Recall</span>
+          <span class="value" id="recallTotal">0 / 3</span>
+        </div>
+        <div class="score-chip">
+          <span class="label">Language</span>
+          <span class="value" id="languageTotal">0 / 9</span>
+        </div>
+      </div>
+
+      <div class="total-card">
+        <div class="total-inner">
+          <div>
+            <div class="total-score-main" id="overallScore">0 / 30</div>
+            <div class="total-score-sub">
+              Severity: <span id="severityLabel">Not scored</span>
+            </div>
+            <div class="helper-text">
+              Interpretation (guideline only):<br>
+              25–30 Normal · 21–24 Mild · 10–20 Moderate · &lt;10 Severe
+            </div>
+          </div>
+          <div>
+            <div class="interpretation-label" id="interpretationChip">
+              <span class="dot"></span>
+              <span id="interpretationText">Awaiting input</span>
+            </div>
+            <p class="interpretation-text" id="interpretationDetail">
+              Begin scoring items to see the interpretation.
+            </p>
+            <div class="btn-row">
+              <button type="button" class="btn" id="resetButton">
+                ↺ Clear all
+              </button>
+              <button type="button" class="btn btn-outline" id="maxButton">
+                ⧉ Fill example (normal)
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="legend" style="margin-top:8px;">
+          <span><strong>Tip:</strong> Designed for real-time bedside use.</span>
+        </div>
+      </div>
+
+      <p class="note">
+        This tool is for clinical support only and does not replace your clinical judgment
+        or local MMSE administration/scoring protocols.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function clamp(num, min, max) {
+    return Math.min(Math.max(num, min), max);
+  }
+
+  function countChecked(selector) {
+    const boxes = document.querySelectorAll(selector);
+    let total = 0;
+    boxes.forEach(box => {
+      if (box.checked) {
+        const pts = parseFloat(box.dataset.points || "1");
+        total += isNaN(pts) ? 0 : pts;
+      }
+    });
+    return total;
+  }
+
+  function updateScores() {
+    // Section totals
+    const orientationTime = countChecked(".orient-time");
+    const orientationPlace = countChecked(".orient-place");
+    const orientationTotal = orientationTime + orientationPlace;
+
+    const registrationTotal = countChecked(".registration");
+    const recallTotal = countChecked(".recall");
+    const languageTotal = countChecked(".language");
+
+    let attentionScore = parseInt(
+      document.getElementById("attentionScore").value || "0",
+      10
+    );
+    attentionScore = isNaN(attentionScore) ? 0 : clamp(attentionScore, 0, 5);
+
+    // Update section UI
+    document.getElementById("attentionScore").value = attentionScore;
+    document.getElementById("orientationTotal").textContent =
+      orientationTotal + " / 10";
+    document.getElementById("registrationTotal").textContent =
+      registrationTotal + " / 3";
+    document.getElementById("attentionTotal").textContent =
+      attentionScore + " / 5";
+    document.getElementById("recallTotal").textContent =
+      recallTotal + " / 3";
+    document.getElementById("languageTotal").textContent =
+      languageTotal + " / 9";
+
+    // Overall total
+    const overall = orientationTotal + registrationTotal +
+      attentionScore + recallTotal + languageTotal;
+
+    document.getElementById("overallScore").textContent =
+      overall + " / 30";
+
+    // Interpretation
+    const severityLabel = document.getElementById("severityLabel");
+    const interpretationChip = document.getElementById("interpretationChip");
+    const interpretationText = document.getElementById("interpretationText");
+    const interpretationDetail = document.getElementById("interpretationDetail");
+    const dot = interpretationChip.querySelector(".dot");
+
+    if (overall === 0) {
+      severityLabel.textContent = "Not scored";
+      interpretationText.textContent = "Awaiting input";
+      interpretationDetail.textContent =
+        "Begin scoring items to see the interpretation.";
+      dot.style.background = "#6b7280";
+      return;
+    }
+
+    let severity, detail, color;
+
+    if (overall >= 25) {
+      severity = "Normal range (25–30)";
+      detail = "Score is within the typical reference range for intact cognition.";
+      color = "#16a34a"; // green
+    } else if (overall >= 21) {
+      severity = "Mild impairment (21–24)";
+      detail = "Consistent with mild cognitive impairment; interpret in clinical context.";
+      color = "#eab308"; // yellow
+    } else if (overall >= 10) {
+      severity = "Moderate impairment (10–20)";
+      detail = "Score falls in the moderate impairment range.";
+      color = "#f97316"; // orange
+    } else {
+      severity = "Severe impairment (<10)";
+      detail = "Score is in the severe impairment range.";
+      color = "#dc2626"; // red
+    }
+
+    severityLabel.textContent = severity;
+    interpretationText.textContent = severity;
+    interpretationDetail.textContent = detail;
+    dot.style.background = color;
+  }
+
+  function resetForm() {
+    document
+      .querySelectorAll("input[type='checkbox'].score-checkbox")
+      .forEach(cb => (cb.checked = false));
+    document.getElementById("attentionScore").value = 0;
+    updateScores();
+  }
+
+  function fillExampleNormal() {
+    // Clear first
+    resetForm();
+
+    // Check all orientation, registration, recall, language
+    document
+      .querySelectorAll("input[type='checkbox'].score-checkbox")
+      .forEach(cb => (cb.checked = true));
+
+    // Full attention
+    document.getElementById("attentionScore").value = 5;
+
+    updateScores();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document
+      .querySelectorAll("input[type='checkbox'].score-checkbox")
+      .forEach(cb => {
+        cb.addEventListener("change", updateScores);
+      });
+
+    document
+      .getElementById("attentionScore")
+      .addEventListener("input", updateScores);
+
+    document
+      .getElementById("resetButton")
+      .addEventListener("click", resetForm);
+
+    document
+      .getElementById("maxButton")
+      .addEventListener("click", fillExampleNormal);
+
+    updateScores();
+  });
+</script>
+</body>
+</html>
